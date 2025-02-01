@@ -1,0 +1,28 @@
+services:
+  selenium-grid:
+    image: selenium/standalone-chrome:4.28.1-20250123
+    container_name: selenium-grid
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+    networks:
+      - selenium
+
+  test-runner:
+    build: .
+    container_name: test-runner
+    depends_on:
+      - selenium-grid
+    networks:
+      - selenium
+    environment:
+      - MAVEN_PROFILE=${MAVEN_PROFILE:-all-tests} # [all-tests, api, web]
+      - ENVIRONMENT=${ENVIRONMENT:-dev} # [dev, uat, prod]
+      - REMOTE_DRIVER_URL=http://selenium-grid:4444/wd/hub
+    volumes:
+      - ./docker-reports:/app/target/cucumber-reports
+      - ./api-tests-output:/app/api-tests-output
+
+networks:
+  selenium:
+    driver: bridge
